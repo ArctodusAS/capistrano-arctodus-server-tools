@@ -7,9 +7,9 @@ class Capistrano::ArctodusServerTools::Plugin < Capistrano::Plugin
     set_if_empty :rbenv_type, :system
   end
 
-  # def register_hooks
-    # after 'deploy:finishing', 'deploy:restart'
-  # end
+  def register_hooks
+    before "bundler:install", "puma:check_ruby_bundler"
+  end
 
   def define_tasks
     %w(puma delayed_job).each do |task|

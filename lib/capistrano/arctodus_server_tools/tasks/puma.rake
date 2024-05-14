@@ -48,4 +48,20 @@ namespace :puma do
       verify_puma_service_active
     end
   end
+  # For some reason Puma wont start without the correct version of Bundler in the system gems
+  task :check_ruby_bundler do
+    on roles(:app) do
+      within release_path do
+        path_prefix = "PATH=#{fetch(:rbenv_path)}/shims:#{fetch(:rbenv_path)}/bin:$PATH"
+        bundled_with = capture :tail, "-n1", 'Gemfile.lock'
+        bundler_installed = test("cd #{release_path} && #{path_prefix} gem list -i bundler -v #{bundled_with}")
+        info "Bundler v#{bundled_with} installed: #{bundler_installed}"
+        unless bundler_installed
+          execute "cd #{release_path}  && #{path_prefix} gem install bundler -v #{bundled_with}"
+        end
+        # Maybe there is a cleaner way by to do this by temporarily changing the capistrano-bundler
+        # configuration to make it check system gems instead of the deployment gems in shared_path/bundle.
+      end
+    end
+  end
 end
