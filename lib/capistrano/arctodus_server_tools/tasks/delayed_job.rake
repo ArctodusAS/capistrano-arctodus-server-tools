@@ -2,7 +2,7 @@ namespace :delayed_job do
   desc 'Stop the delayed_job process'
   task :stop do
     on roles(:app) do
-      info "Restarting delayed_job. Will wait a bit for running jobs to finish before killing them."
+      info "Stopping delayed_job. Will wait a bit for running jobs to finish before killing them. (see signals_and_waits in delayed_job.sh)"
       execute "sudo /bin/systemctl stop #{fetch :delayed_job_service_name}"
     end
   end
