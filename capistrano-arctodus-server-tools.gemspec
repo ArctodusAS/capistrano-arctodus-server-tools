@@ -7,4 +7,5 @@ Gem::Specification.new do |s|
   s.add_dependency "capistrano", "~> 3.0"
   s.files = `git ls-files`.split($/)
   s.require_paths = ["lib"]
+  s.add_dependency 'tty-spinner', '~> 0.9.3'
 end

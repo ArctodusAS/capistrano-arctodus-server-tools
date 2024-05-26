@@ -1,30 +1,36 @@
 namespace :puma do
+  desc "Puma phased restart"
   task :phased_restart do
     on roles(:app) do
       execute "kill -s USR1 $(cat #{fetch :puma_pid_path})"
     end
   end
+  desc "Puma hot restart"
   task :hot_restart do
     on roles(:app) do
       execute "kill -s USR2 $(cat #{fetch :puma_pid_path})"
     end
   end
+  desc "Puma SystemD start"
   task :systemd_start do
     on roles(:app) do
       execute "sudo /bin/systemctl start #{fetch :puma_service_name}"
     end
   end
+  desc "Puma SystemD stop"
   task :systemd_stop do
     on roles(:app) do
       execute "sudo /bin/systemctl stop #{fetch :puma_service_name}"
     end
   end
+  desc "Puma SystemD restart"
   task :systemd_restart do
     on roles(:app) do
       invoke "puma:systemd_stop"
       invoke "puma:systemd_start"
     end
   end
+  desc "Puma SystemD release dependent restart"
   task :release_dependent_restart do
     on roles(:app) do
       if !puma_running?
@@ -49,6 +55,7 @@ namespace :puma do
     end
   end
   # For some reason Puma wont start without the correct version of Bundler in the system gems
+  desc "Check server Ruby Bundler version and install if needed"
   task :check_ruby_bundler do
     on roles(:app) do
       within release_path do
