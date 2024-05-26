@@ -17,7 +17,7 @@ namespace :delayed_job do
   desc 'Restart the delayed_job process'
   task :restart do
     on roles(:app) do
-      invoke "delayed_job:stop"
+      invoke! "delayed_job:stop"
       invoke "delayed_job:start"
     end
   end
