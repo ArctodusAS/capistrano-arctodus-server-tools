@@ -1,8 +1,9 @@
 class Capistrano::ArctodusServerTools::Plugin < Capistrano::Plugin
   def set_defaults
     set_if_empty :puma_service_name, -> { "puma_#{fetch :application}" }
-    set_if_empty :delayed_job_service_name, -> { "delayed_job_#{fetch :application}" }
     set_if_empty :puma_pid_path, -> { shared_path.join("tmp", "pids", fetch(:puma_service_name) + ".pid") }
+    set_if_empty :puma_active_timeout, 60
+    set_if_empty :delayed_job_service_name, -> { "delayed_job_#{fetch :application}" }
     set_if_empty :repo_url, -> { "git@github.com:ArctodusAS/#{fetch :application}.git" }
     set_if_empty :rbenv_type, :system
   end

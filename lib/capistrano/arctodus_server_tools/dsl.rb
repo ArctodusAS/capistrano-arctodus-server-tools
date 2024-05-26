@@ -37,7 +37,7 @@ module Capistrano::ArctodusServerTools::DSL
   end
 
   def verify_puma_service_active
-    seconds_to_wait = 20
+    seconds_to_wait = fetch :puma_active_timeout
     info "Waiting for up to #{seconds_to_wait}s for Puma to become active"
     while !puma_running? && seconds_to_wait.positive?
       sleep 1
