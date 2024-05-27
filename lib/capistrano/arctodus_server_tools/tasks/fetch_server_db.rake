@@ -33,7 +33,6 @@ end
 
 desc "Drop and recreate local database based on the dump file"
 task :pg_restore_locally do
-  require 'tty-spinner'
   run_locally do
     local_dump_path = fetch(:local_db_dump_path)
     raise "Local file missing: #{local_dump_path}" unless File.exist?(local_dump_path)
@@ -42,6 +41,6 @@ task :pg_restore_locally do
     system("pg_restore --verbose --no-acl --no-owner -j 4 -d #{fetch :local_db} #{local_dump_path}", exception: true)
     system("RAILS_ENV=development bundle exec rake db:migrate", exception: true) unless ENV['MIGRATE'] == 'false'
     system("RAILS_ENV=development bundle exec rake db:environment:set", exception: true)
-    system("RAILS_ENV=development bundle exec rake parallel:load_schema", exception: true) if defined?(ParallelTests)
+    system("RAILS_ENV=development bundle exec rake parallel:load_schema", exception: true) if test("bundle show parallel_tests")
   end
 end
