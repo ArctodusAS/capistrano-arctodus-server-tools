@@ -1,4 +1,16 @@
 module Capistrano::ArctodusServerTools::DSL
+  def monit_status
+    capture("systemctl show -p ActiveState --value #{fetch :monit_service_name}")
+  end
+
+  def monit_running?
+    monit_status == 'active'
+  end
+
+  def migration_change?
+    !test(:diff, "-qr #{release_path}/db #{current_path}/db")
+  end
+
   def ruby_updated?
     current_ruby != prev_ruby
   end

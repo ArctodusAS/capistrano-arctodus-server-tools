@@ -9,14 +9,21 @@ class Capistrano::ArctodusServerTools::Plugin < Capistrano::Plugin
     set_if_empty :remote_db, -> { "#{fetch :application}_production" }
     set_if_empty :local_db, -> { "#{fetch :application}_development" }
     set_if_empty :local_db_dump_path, -> { Pathname.new(Dir.pwd).join('tmp', 'db_export.sql').to_s }
+    set_if_empty :local_db_dump_path, -> { Pathname.new(Dir.pwd).join('tmp', 'db_export.sql').to_s }
+    set_if_empty :monit_service_name, "monit"
+    set :_monit_temporarily_stopped, false
   end
 
   def register_hooks
     before "bundler:install", "puma:check_ruby_bundler"
+    if Rake::Task.task_defined?('deploy:migrate')
+      before "deploy:migrate", "monit:migration_dependent_stop"
+      after "deploy:finishing", "monit:migration_dependent_start"
+    end
   end
 
   def define_tasks
-    %w(puma delayed_job fetch_server_db).each do |task|
+    %w(puma delayed_job monit fetch_server_db).each do |task|
       eval_rakefile File.expand_path("../tasks/#{task}.rake", __FILE__)
     end
   end
