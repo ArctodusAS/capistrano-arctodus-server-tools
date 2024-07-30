@@ -10,15 +10,16 @@ class Capistrano::ArctodusServerTools::Plugin < Capistrano::Plugin
     set_if_empty :local_db, -> { "#{fetch :application}_development" }
     set_if_empty :local_db_dump_path, -> { Pathname.new(Dir.pwd).join('tmp', 'db_export.sql').to_s }
     set_if_empty :local_db_dump_path, -> { Pathname.new(Dir.pwd).join('tmp', 'db_export.sql').to_s }
+    set :conditionally_migrate, true
     set_if_empty :monit_service_name, "monit"
     set :_monit_temporarily_stopped, false
   end
 
   def register_hooks
     before "bundler:install", "puma:check_ruby_bundler"
-    if Rake::Task.task_defined?('deploy:migrate')
-      before "deploy:migrate", "monit:migration_dependent_stop"
-      after "deploy:finishing", "monit:migration_dependent_start"
+    if Rake::Task.task_defined?('deploy:migrating')
+      before "deploy:migrating", "monit:stop_before_migration"
+      after "deploy:finishing", "monit:restart_after_migration"
     end
   end
 

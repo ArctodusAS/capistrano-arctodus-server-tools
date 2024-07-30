@@ -7,10 +7,6 @@ module Capistrano::ArctodusServerTools::DSL
     monit_status == 'active'
   end
 
-  def migration_change?
-    !test(:diff, "-qr #{release_path}/db #{current_path}/db")
-  end
-
   def ruby_updated?
     current_ruby != prev_ruby
   end
