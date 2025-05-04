@@ -21,6 +21,11 @@ module Capistrano::ArctodusServerTools::DSL
 
   def prev_ruby
     capture(:cat, prev_release_path.join(".ruby-version"))
+  rescue SSHKit::Command::Failed => e
+    warn("Checking previous ruby version failed:")
+    e.message.to_s.split("\n").each(&method(:warn))
+    warn("Falling back to v0.0.0")
+    "0.0.0"
   end
 
   def current_ruby
