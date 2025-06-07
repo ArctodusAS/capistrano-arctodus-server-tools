@@ -15,6 +15,10 @@ module Capistrano::ArctodusServerTools::DSL
     current_puma != prev_puma
   end
 
+  def stringio_updated?
+    current_stringio != prev_stringio
+  end
+
   def puma_running?
     puma_status == 'active'
   end
@@ -33,11 +37,19 @@ module Capistrano::ArctodusServerTools::DSL
   end
 
   def prev_puma
-    capture("cat #{prev_release_path}/Gemfile.lock | grep puma").split("\n").first
+    find_gem_version(path: prev_release_path, gem_name: "puma")
   end
 
   def current_puma
-    capture("cat #{release_path}/Gemfile.lock | grep puma").split("\n").first
+    find_gem_version(path: release_path, gem_name: "puma")
+  end
+
+  def prev_stringio
+    find_gem_version(path: prev_release_path, gem_name: "stringio")
+  end
+
+  def current_stringio
+    find_gem_version(path: release_path, gem_name: "stringio")
   end
 
   def puma_status
@@ -64,5 +76,14 @@ module Capistrano::ArctodusServerTools::DSL
       warn("journalctl -u #{fetch :puma_service_name} -n 30 --no-pager")
       warn("tail -n 30 #{release_path.join('log', 'production.log')}")
     end
+  end
+
+  def find_gem_version(path:, gem_name:)
+    regex = '^\s{4}' + gem_name + ' \([0-9]+\.[0-9]+(\.[0-9]+)?\)'
+    result = capture("cat #{path}/Gemfile.lock | grep -E '#{regex}' || true")
+    if result == ""
+      info result
+    end
+    result
   end
 end
