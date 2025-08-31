@@ -2,13 +2,15 @@ namespace :puma do
   desc "Puma phased restart"
   task :phased_restart do
     on roles(:app) do
-      execute "kill -s USR1 $(cat #{fetch :puma_pid_path})"
+      # Sends a USR2 process signal to the Puma master process
+      execute "sudo /bin/systemctl reload #{fetch :puma_service_name}"
     end
   end
   desc "Puma hot restart"
   task :hot_restart do
     on roles(:app) do
-      execute "kill -s USR2 $(cat #{fetch :puma_pid_path})"
+      raise "Do a systemd restart intead"
+      # execute "kill -s USR2 $(cat #{fetch :puma_pid_path})"
     end
   end
   desc "Puma SystemD start"
