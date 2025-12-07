@@ -15,10 +15,6 @@ module Capistrano::ArctodusServerTools::DSL
     current_puma != prev_puma
   end
 
-  def stringio_updated?
-    current_stringio != prev_stringio
-  end
-
   def puma_running?
     puma_status == 'active'
   end
@@ -42,14 +38,6 @@ module Capistrano::ArctodusServerTools::DSL
 
   def current_puma
     find_gem_version(path: release_path, gem_name: "puma")
-  end
-
-  def prev_stringio
-    find_gem_version(path: prev_release_path, gem_name: "stringio")
-  end
-
-  def current_stringio
-    find_gem_version(path: release_path, gem_name: "stringio")
   end
 
   def puma_status
@@ -79,11 +67,35 @@ module Capistrano::ArctodusServerTools::DSL
   end
 
   def find_gem_version(path:, gem_name:)
-    regex = '^\s{4}' + gem_name + ' \([0-9]+\.[0-9]+(\.[0-9]+)?\)'
-    result = capture("cat #{path}/Gemfile.lock | grep -E '#{regex}' || true")
-    if result == ""
-      info result
+    @cached_gemfiles ||= {}
+    unless @cached_gemfiles[path]
+      @cached_gemfiles[path] = capture("cat #{path}/Gemfile.lock || true")
     end
-    result
+    regex = /^\s{4}#{Regexp.escape(gem_name)} \((\d+\.\d+(?:\.\d+))?\)/
+    @cached_gemfiles[path].match(/#{regex}/)&.captures&.first
+  end
+
+  def updated_default_gems
+    current_ruby_default_gems.select do |gem_name|
+      find_gem_version(path: prev_release_path, gem_name: gem_name) != find_gem_version(path: release_path, gem_name: gem_name)
+    end
+  end
+
+  def current_ruby_default_gems
+    require "net/http"
+    ruby_version = RUBY_VERSION.split(".")[0..1].join(".")
+    default_gems = []
+    endpoint = URI("https://stdgems.org/default_gems.json")
+    response = Net::HTTP.start(endpoint.host, endpoint.port, read_timeout: 5, open_timeout: 5, use_ssl: endpoint.scheme == 'https') do |http|
+        http.get(endpoint)
+      end
+    gem_data = JSON.parse(response.body)
+    gem_data["gems"].each do |gem_info|
+      default_gems << gem_info["gem"] if gem_info["versions"].keys.include?(ruby_version)
+    end
+    default_gems
+  rescue StandardError => e
+    error("Fetching default gems failed: #{e.message}. If a default gem was updated, Puma will not restart correctly.")
+    []
   end
 end

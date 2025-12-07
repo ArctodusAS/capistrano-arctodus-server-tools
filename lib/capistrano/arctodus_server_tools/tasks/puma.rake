@@ -49,13 +49,11 @@ namespace :puma do
         info "Current Puma: #{current_puma}"
         info "Puma update detected. Doing a SystemD restart. 1 second downtime expected."
         invoke "puma:systemd_restart"
-      elsif stringio_updated? # Puma phased restart will not work if the stringio gem is updated
-        info "Prev stringio: #{prev_stringio}"
-        info "Current stringio: #{current_stringio}"
-        info "stringio update detected. Doing a SystemD restart. 1 second downtime expected."
+      elsif updated_default_gems.any? # Puma phased restart will not work if a default gem exists in Gemfile.lock and it is updated
+        info "default gem update detected (#{updated_default_gems.join(',')}). Doing a SystemD restart. 1 second downtime expected."
         invoke "puma:systemd_restart"
       else
-        info "No Ruby, Puma or stringio update detected. Doing a zero downtime phased restart."
+        info "No Ruby, Puma or default gem update detected. Doing a zero downtime phased restart."
         invoke "puma:phased_restart"
       end
       verify_puma_service_active
